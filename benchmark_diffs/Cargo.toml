@@ -43,6 +43,14 @@ jemallocator = "0.5.0"
 
 [dev-dependencies]
 hyperast_gen_ts_java = { workspace = true }
+criterion = { version = " 0.4", features = [
+    "rayon","plotters", "cargo_bench_support", "html_reports", "real_blackbox"
+]}
+
+
+[[bench]]
+name = "first_bench"
+harness = false
 
 # [[bin]]
 # name = "window_combination"
