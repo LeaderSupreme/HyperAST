@@ -98,6 +98,7 @@ pub type MDCache = HashMap<NodeIdentifier, MD>;
 // eg. decls refs, maybe hashes but not size and height
 // * metadata: computation results from concrete code of node and its children
 // they can be qualitative metadata .eg a hash or they can be quantitative .eg lines of code
+#[derive(Debug)]
 pub struct MD {
     metrics: SubTreeMetrics<SyntaxNodeHashs<u32>>,
     ana: Option<PartialAnalysis>,
@@ -275,7 +276,8 @@ impl<'stores, 'cache, TS, More, const HIDDEN_NODES: bool> ZippedTreeGen
     for JavaTreeGen<'stores, 'cache, TS, SimpleStores<TS>, More, HIDDEN_NODES>
 where
     TS: JavaEnabledTypeStore + 'static + hyperast::types::RoleStore<Role = Role, IdF = u16>,
-    More: tree_gen::Prepro<SimpleStores<TS>> + for<'s> tree_gen::PreproTSG<SimpleStores<TS>, Acc = Acc>,
+    More: tree_gen::Prepro<SimpleStores<TS>>
+        + for<'s> tree_gen::PreproTSG<SimpleStores<TS>, Acc = Acc>,
 {
     // type Node1 = SimpleNode1<NodeIdentifier, String>;
     type Stores = SimpleStores<TS>;
@@ -518,7 +520,8 @@ impl<'stores, 'cache, 'acc, TS: JavaEnabledTypeStore + 'static, More, const HIDD
         cursor: tree_sitter::TreeCursor,
     ) -> FullNode<StatsGlobalData, Local>
     where
-        More: tree_gen::Prepro<SimpleStores<TS>> + for<'s> tree_gen::PreproTSG<SimpleStores<TS>, Acc = Acc>,
+        More: tree_gen::Prepro<SimpleStores<TS>>
+            + for<'s> tree_gen::PreproTSG<SimpleStores<TS>, Acc = Acc>,
     {
         todo!()
     }
@@ -575,7 +578,8 @@ where
     TS: JavaEnabledTypeStore<Ty2 = Type>
         + 'static
         + hyperast::types::RoleStore<Role = Role, IdF = u16>,
-    More: tree_gen::Prepro<SimpleStores<TS>> + for<'s> tree_gen::PreproTSG<SimpleStores<TS>, Acc = Acc>,
+    More: tree_gen::Prepro<SimpleStores<TS>>
+        + for<'s> tree_gen::PreproTSG<SimpleStores<TS>, Acc = Acc>,
 {
     fn make_spacing(&mut self, spacing: Vec<u8>) -> Local {
         let kind = Type::Spaces;
@@ -775,7 +779,8 @@ impl<'stores, 'cache, TS, More, const HIDDEN_NODES: bool> TreeGen
     for JavaTreeGen<'stores, 'cache, TS, SimpleStores<TS>, More, HIDDEN_NODES>
 where
     TS: JavaEnabledTypeStore + 'static + hyperast::types::RoleStore<Role = Role, IdF = u16>,
-    More: tree_gen::Prepro<SimpleStores<TS>> + for<'s> tree_gen::PreproTSG<SimpleStores<TS>, Acc = Acc>,
+    More: tree_gen::Prepro<SimpleStores<TS>>
+        + for<'s> tree_gen::PreproTSG<SimpleStores<TS>, Acc = Acc>,
 {
     type Acc = Acc;
     type Global = Global<'stores>;
@@ -943,7 +948,8 @@ impl<
         'stores,
         'cache,
         TS: JavaEnabledTypeStore + 'static + hyperast::types::RoleStore<Role = Role, IdF = u16>,
-        More: tree_gen::Prepro<SimpleStores<TS>> + for<'s> tree_gen::PreproTSG<SimpleStores<TS>, Acc = Acc>,
+        More: tree_gen::Prepro<SimpleStores<TS>>
+            + for<'s> tree_gen::PreproTSG<SimpleStores<TS>, Acc = Acc>,
         const HIDDEN_NODES: bool,
     > NodeStoreExt<HashedNode>
     for JavaTreeGen<'stores, 'cache, TS, SimpleStores<TS>, More, HIDDEN_NODES>
