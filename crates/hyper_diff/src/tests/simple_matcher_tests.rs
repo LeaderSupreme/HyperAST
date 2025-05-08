@@ -36,8 +36,8 @@ fn preprocess_for_diff(
 
 fn prepare_tree_print<'a>(
     stores: &'a SimpleStores<TStore>,
-) -> impl Fn(FullNode<StatsGlobalData, Local>) -> () + 'a {
-    return |tree: FullNode<StatsGlobalData, Local>| {
+) -> impl Fn(&FullNode<StatsGlobalData, Local>) -> () + 'a {
+    return |tree: &FullNode<StatsGlobalData, Local>| {
         println!();
         println!(
             "{}",
@@ -53,28 +53,28 @@ fn change_class_name_test() {
 
     let (stores, src, dst) = preprocess_for_diff(src, dst);
 
-    let diff_result = algorithms::gumtree::diff(
+    let diff_result = algorithms::gumtree::diff_simple(
         &stores,
         &src.local.compressed_node,
         &dst.local.compressed_node,
     );
 
     let print_tree = prepare_tree_print(&stores);
-    print_tree(src);
-    print_tree(dst);
+    print_tree(&src);
+    print_tree(&dst);
 
     println!("stats from diffing: \n{}", &diff_result.summarize());
-    diff_result
-        .actions
-        .unwrap()
-        .iter()
-        .for_each(|a| println!("{:?}", a));
+    // diff_result
+    //     .actions
+    //     .unwrap()
+    //     .iter()
+    //     .for_each(|a| println!("{:?}", a));
 
-    // action_vec::actions_vec_f(
-    //     &diff_result.actions.unwrap(),
-    //     &diff_result.mapper.hyperast,
-    //     src.local.compressed_node.as_id().clone(),
-    // );
+    action_vec::actions_vec_f(
+        &diff_result.actions.unwrap(),
+        &diff_result.mapper.hyperast,
+        src.local.compressed_node.as_id().clone(),
+    );
 }
 
 #[test]
@@ -90,9 +90,10 @@ fn add_inner_class_test() {
     );
 
     let print_tree = prepare_tree_print(&stores);
-    print_tree(src);
-    print_tree(dst);
+    print_tree(&src);
+    print_tree(&dst);
 
+    println!("stats from diffing: \n{}", &diff_result.summarize());
     diff_result
         .actions
         .unwrap()
