@@ -17,7 +17,8 @@ pub struct SimpleBottomUpMatcher<
     Ddst,
     HAST,
     M: MonoMappingStore,
-    const SIMILARITY_THRESHOLD: u64 = 1,
+    const SIMILARITY_THRESHOLD_NUM: u64 = 1,
+    const SIMILARITY_THRESHOLD_DEN: u64 = 2,
 > {
     internal: BottomUpMatcher<Dsrc, Ddst, HAST, M>,
 }
@@ -40,8 +41,9 @@ impl<
             + POBorrowSlice<HAST, M::Dst>,
         HAST: HyperAST + Copy,
         M: MonoMappingStore + Default,
-        const SIMILARITY_THRESHOLD: u64,
-    > SimpleBottomUpMatcher<Dsrc, Ddst, HAST, M, SIMILARITY_THRESHOLD>
+        const SIMILARITY_THRESHOLD_NUM: u64,
+        const SIMILARITY_THRESHOLD_DEN: u64,
+    > SimpleBottomUpMatcher<Dsrc, Ddst, HAST, M, SIMILARITY_THRESHOLD_NUM, SIMILARITY_THRESHOLD_DEN>
 where
     for<'t> <HAST as hyperast::types::AstLending<'t>>::RT: WithHashs,
     M::Src: PrimInt,
@@ -131,7 +133,10 @@ where
                         &self.internal.mappings,
                     );
 
-                    if (similarity > max && similarity >= SIMILARITY_THRESHOLD as f64) {
+                    if (similarity > max
+                        && similarity
+                            >= (SIMILARITY_THRESHOLD_NUM as f64 / SIMILARITY_THRESHOLD_DEN as f64))
+                    {
                         max = similarity;
                         best = Some(candidate);
                     }
