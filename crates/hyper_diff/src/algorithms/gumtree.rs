@@ -113,6 +113,7 @@ where
         |x| x,
         |dst_arena| SimpleBfsMapper::with_store(hyperast, dst_arena),
     );
+
     let prepare_gen_t = now.elapsed().as_secs_f64();
     let now = Instant::now();
     let actions = ScriptGenerator::compute_actions(hyperast, &mapper.mapping).ok();

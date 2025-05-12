@@ -1,3 +1,4 @@
+use crate::actions::Actions;
 use crate::algorithms;
 use crate::{actions::action_vec, algorithms::gumtree::diff};
 use hyperast::types::NodeId;
@@ -47,7 +48,7 @@ fn prepare_tree_print<'a>(
 }
 
 #[test]
-fn change_class_name_test() {
+fn change_method_name_test() {
     let src = "class A {}".as_bytes();
     let dst = "class B {}".as_bytes();
 
@@ -71,16 +72,19 @@ fn change_class_name_test() {
     //     .for_each(|a| println!("{:?}", a));
 
     action_vec::actions_vec_f(
-        &diff_result.actions.unwrap(),
+        &diff_result.actions.as_ref().unwrap(),
         &diff_result.mapper.hyperast,
         src.local.compressed_node.as_id().clone(),
     );
+
+    // There should be only one action, to update the method name.
+    assert_eq!(diff_result.actions.unwrap().len(), 1 as usize);
 }
 
 #[test]
-fn add_inner_class_test() {
-    let src = "class A {}".as_bytes();
-    let dst = "class A { class B {} }".as_bytes();
+fn example_paper_test() {
+    let src = "public class Foo {public void foo() {print('unchanged'); print('unchanged'); print('original');}}".as_bytes();
+    let dst = "public class Foo {public void foo() {print('unchanged'); print('unchanged'); print('modified');}}".as_bytes();
 
     let (stores, src, dst) = preprocess_for_diff(src, dst);
     let diff_result = algorithms::gumtree::diff(
@@ -94,15 +98,14 @@ fn add_inner_class_test() {
     print_tree(&dst);
 
     println!("stats from diffing: \n{}", &diff_result.summarize());
-    diff_result
-        .actions
-        .unwrap()
-        .iter()
-        .for_each(|a| println!("{:?}", a));
 
-    // action_vec::actions_vec_f(
-    //     &diff_result.actions.unwrap(),
-    //     &diff_result.mapper.hyperast,
-    //     src.local.compressed_node.as_id().clone(),
-    // );
+    action_vec::actions_vec_f(
+        &diff_result.actions.as_ref().unwrap(),
+        &diff_result.mapper.hyperast,
+        src.local.compressed_node.as_id().clone(),
+    );
+
+    // There should only be one action, update 'original' to 'modified':
+    // Upd "'modified'" (83, 93, Entity(576))
+    assert_eq!(diff_result.actions.unwrap().len(), 1 as usize);
 }

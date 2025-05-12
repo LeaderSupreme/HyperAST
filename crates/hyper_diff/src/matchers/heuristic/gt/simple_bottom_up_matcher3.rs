@@ -106,15 +106,17 @@ where
 
     pub fn execute<'b>(&mut self) {
         assert!(self.internal.src_arena.len() > 0);
+        let similarity_threshold: f64 =
+            SIMILARITY_THRESHOLD_NUM as f64 / SIMILARITY_THRESHOLD_DEN as f64;
 
         for tree in self.internal.src_arena.iter_df_post::<true>() {
             if self.internal.src_arena.parent(&tree).is_none() {
                 self.internal.mappings.link(
-                    self.internal.src_arena.root(),
+                    self.internal.src_arena.root(), // <- this is tree
                     self.internal.dst_arena.root(),
                 );
                 self.last_chance_match(
-                    &self.internal.src_arena.root(),
+                    &self.internal.src_arena.root(), // <- this is tree
                     &self.internal.dst_arena.root(),
                 );
                 break;
@@ -122,7 +124,9 @@ where
                 let candidates = self.internal.get_dst_candidates(&tree);
                 let mut best = None;
                 let mut max: f64 = -1.;
-                let tree_size = self.internal.src_arena.descendants_count(&tree);
+
+                // Can be used to calculate an appropriate threshold. In Gumtree this is done when no threshold is provided.
+                // let tree_size = self.internal.src_arena.descendants_count(&tree);
 
                 for candidate in candidates {
                     // In gumtree implementation they check if Simliarity_THreshold is set, otherwise they compute a fitting value
@@ -133,10 +137,7 @@ where
                         &self.internal.mappings,
                     );
 
-                    if (similarity > max
-                        && similarity
-                            >= (SIMILARITY_THRESHOLD_NUM as f64 / SIMILARITY_THRESHOLD_DEN as f64))
-                    {
+                    if (similarity > max && similarity >= similarity_threshold) {
                         max = similarity;
                         best = Some(candidate);
                     }
@@ -146,29 +147,15 @@ where
                     self.last_chance_match(&tree, &best_candidate);
                     self.internal.mappings.link(tree, best_candidate);
                 }
-            } else if (self.internal.mappings.is_src(&tree)
-                && self.src_has_unmapped_children(tree)
-                && self.dst_has_unmapped_children(self.internal.mappings.get_dst_unchecked(&tree)))
+            } else if self.internal.mappings.is_src(&tree)  // Check if there are unmapped children in src or dst
+                && self.internal.are_srcs_unmapped(&tree)
+                && self
+                    .internal
+                    .are_dsts_unmapped(&self.internal.mappings.get_dst_unchecked(&tree))
             {
                 self.last_chance_match(&tree, &self.internal.mappings.get_dst_unchecked(&tree));
             }
         }
-    }
-
-    fn dst_has_unmapped_children(&mut self, src: M::Dst) -> bool {
-        self.internal
-            .dst_arena
-            .children(&src)
-            .iter()
-            .any(|child| !self.internal.mappings.is_dst(&child))
-    }
-
-    fn src_has_unmapped_children(&mut self, src: M::Src) -> bool {
-        self.internal
-            .src_arena
-            .children(&src)
-            .iter()
-            .any(|child| !self.internal.mappings.is_src(&child))
     }
 
     fn src_has_children(&mut self, src: M::Src) -> bool {
