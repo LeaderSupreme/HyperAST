@@ -7,7 +7,6 @@ use std::{
 use num::ToPrimitive;
 
 use crate::types::Children;
-use crate::types::Childrn;
 use crate::{
     impact::serialize::{Keyed, MySerialize},
     types::{AstLending, HyperAST, HyperType, NodeId, RoleStore},
@@ -407,11 +406,7 @@ impl Space {
                 }
             })
             .collect();
-        if err {
-            None
-        } else {
-            Some(r)
-        }
+        if err { None } else { Some(r) }
     }
     /// TODO test with nssss, n -> n
     pub fn replace_indentation(indentation: &[Space], spaces: &[Space]) -> Vec<Space> {
@@ -517,15 +512,15 @@ pub struct SimpleSerializer<
 }
 
 impl<
-        'store,
-        IdN,
-        HAST,
-        const TY: bool,
-        const LABELS: bool,
-        const IDS: bool,
-        const SPC: bool,
-        const ROLES: bool,
-    > SimpleSerializer<'store, IdN, HAST, TY, LABELS, IDS, SPC, ROLES>
+    'store,
+    IdN,
+    HAST,
+    const TY: bool,
+    const LABELS: bool,
+    const IDS: bool,
+    const SPC: bool,
+    const ROLES: bool,
+> SimpleSerializer<'store, IdN, HAST, TY, LABELS, IDS, SPC, ROLES>
 {
     pub fn new(stores: &'store HAST, root: IdN) -> Self {
         Self { stores, root }
@@ -600,6 +595,23 @@ where
             let padding = 50usize.saturating_sub(line.len());
             for _ in 0..padding {
                 line.push(' ');
+
+// Added in revision Quentin
+//         if kind.is_spaces() {
+//             if SPC {
+//                 let s = self.stores.label_store().resolve(&label.unwrap());
+//                 let b: String = Space::format_indentation(s.as_bytes())
+//                     .iter()
+//                     .map(|x| x.to_string())
+//                     .collect();
+//                 write!(out, "(")?;
+//                 if IDS { write!(out, "{:?}", id) } else { Ok(()) }
+//                     .and_then(|x| if TY { write!(out, "_",) } else { Ok(x) })?;
+//                 if LABELS {
+//                     write!(out, " {:?}", Space::format_indentation(b.as_bytes()))?;
+//                 }
+//                 write!(out, ")")?;
+
             }
 
             // add the 'path' to the line, this keeps track which path we took trough the tree to get here
@@ -661,6 +673,25 @@ where
                     path.pop();
                 }
             }
+
+// Added in Revision Quentin
+//             (Some(label), None) => {
+//                 write!(out, "(")?;
+//                 w_kind(out)?;
+//                 if LABELS {
+//                     let s = self.stores.label_store().resolve(label);
+//                     if s.len() > 20 {
+//                         write!(
+//                             out,
+//                             "='{}...'",
+//                             &s.char_indices().nth(20).map_or(s, |(i, _)| &s[..i])
+//                         )?;
+//                     } else {
+//                         write!(out, "='{}'", s)?;
+//                     }
+//                 }
+//                 write!(out, ")")?;
+//             }
         }
 
         Ok(())
@@ -797,13 +828,8 @@ where
                     .map(|x| x.to_string())
                     .collect();
                 write!(out, "(")?;
-                if IDS { write!(out, "{:?}", id) } else { Ok(()) }.and_then(|x| {
-                    if TY {
-                        write!(out, "_",)
-                    } else {
-                        Ok(x)
-                    }
-                })?;
+                if IDS { write!(out, "{:?}", id) } else { Ok(()) }
+                    .and_then(|x| if TY { write!(out, "_",) } else { Ok(x) })?;
                 if LABELS {
                     write!(out, " {:?}", Space::format_indentation(b.as_bytes()))?;
                 }

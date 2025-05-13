@@ -3,9 +3,9 @@ use super::{
     PostOrderIterable, ShallowDecompressedTreeStore,
 };
 use crate::matchers::Decompressible;
-use hyperast::types::{self, Children, Childrn, HyperAST, WithChildren};
 use hyperast::PrimInt;
-use num_traits::{cast, one, zero, ToPrimitive};
+use hyperast::types::{self, Children, Childrn, HyperAST, WithChildren};
+use num_traits::{ToPrimitive, cast, one, zero};
 use std::fmt::Debug;
 
 pub struct BasicPostOrder<IdN, IdD> {
@@ -237,12 +237,6 @@ impl<IdN, IdD: PrimInt> BasicPostOrder<IdN, IdD> {
         }
     }
 }
-struct Element<IdC, Idx, IdD> {
-    curr: IdC,
-    idx: Idx,
-    lld: IdD,
-    children: Vec<IdD>,
-}
 
 impl<HAST: HyperAST + Copy, IdD: PrimInt> ShallowDecompressedTreeStore<HAST, IdD>
     for Decompressible<HAST, &BasicPostOrder<HAST::IdN, IdD>>
@@ -378,11 +372,7 @@ where
             return None;
         }
         let sib = lld - num_traits::one();
-        if &sib < p_lld {
-            None
-        } else {
-            Some(sib)
-        }
+        if &sib < p_lld { None } else { Some(sib) }
     }
 }
 

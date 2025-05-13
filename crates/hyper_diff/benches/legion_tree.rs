@@ -8,9 +8,9 @@ use hyperast_gen_ts_java::{
     types::TStore,
 };
 
-
 fn compare_simple_tree_group(c: &mut Criterion) {
     let mut group = c.benchmark_group("LegionTree");
+
     const PAIRS: [(&[u8], &[u8]); 3] = [
         ("class A {}".as_bytes(), "class B {}".as_bytes()),
         (
@@ -39,6 +39,7 @@ fn compare_simple_tree_group(c: &mut Criterion) {
         };
 
         let dst = java_tree_gen.generate_file(b"", dst, tree.walk());
+
         (src.local, dst.local)
     }).collect::<Vec<_>>();
 
@@ -52,7 +53,6 @@ fn compare_simple_tree_group(c: &mut Criterion) {
             })
         });
     }
-
     group.finish()
 }
 

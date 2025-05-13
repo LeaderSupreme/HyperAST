@@ -89,6 +89,9 @@ pub struct MatcherImpl<'b, 'c, SD, DD, HAST, M> {
 pub mod qgrams;
 
 #[doc(hidden)]
+pub mod qgrams;
+
+#[doc(hidden)]
 pub mod other_qgrams;
 
 impl<
