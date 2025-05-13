@@ -37,6 +37,7 @@ fn compare_simple_tree_group(c: &mut Criterion) {
             Ok(t) => t,
             Err(t) => t,
         };
+
         let dst = java_tree_gen.generate_file(b"", dst, tree.walk());
 
         (src.local, dst.local)
@@ -45,7 +46,6 @@ fn compare_simple_tree_group(c: &mut Criterion) {
     for (i, p) in pairs.into_iter().enumerate() {
         group.throughput(Throughput::Elements((p.0.metrics.size + p.0.metrics.size) as u64));
         group.bench_with_input(BenchmarkId::new("zs", i), &p, |b, p| {
-      
             b.iter(|| {
                 ZsMatcher::<DefaultMappingStore<u16>, Decompressible<_, SimpleZsTree<_, u16>>>::matchh(
                     &stores, p.0.compressed_node, p.1.compressed_node,

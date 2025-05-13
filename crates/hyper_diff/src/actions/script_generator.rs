@@ -108,7 +108,7 @@ impl<A: Eq> TestActions<A> for ActionsVec<A> {
 struct InOrderNodes<IdD>(Option<Vec<IdD>>);
 
 /// FEATURE: share parents
-static COMPRESSION: bool = false;
+static COMPRESSION: bool = true;
 
 struct MidNode<IdC, IdD> {
     parent: IdD,

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::{
     actions::action_vec::ActionsVec,
     decompressed_tree_store::ShallowDecompressedTreeStore,
@@ -50,6 +52,19 @@ pub struct ResultsSummary<MD> {
     pub actions: Option<usize>,
     pub prepare_gen_t: f64,
     pub gen_t: f64,
+}
+
+impl<MD: std::fmt::Debug> Display for ResultsSummary<MD> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Mappings: {}", self.mappings)?;
+        if let Some(actions) = self.actions {
+            writeln!(f, "Actions: {}", actions)?;
+        }
+        writeln!(f, "Prepare gen time: {:.3}s", self.prepare_gen_t)?;
+        writeln!(f, "Gen time: {:.3}s", self.gen_t)?;
+        writeln!(f, "Mapping durations: {:?}", self.mapping_durations)?;
+        Ok(())
+    }
 }
 
 impl<A, MD: Clone, HAST, DS, DD> DiffResult<A, Mapper<HAST, DS, DD, VecStore<u32>>, MD> {
