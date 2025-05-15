@@ -110,6 +110,13 @@ where
             SIMILARITY_THRESHOLD_NUM as f64 / SIMILARITY_THRESHOLD_DEN as f64;
 
         for tree in self.internal.src_arena.iter_df_post::<true>() {
+            // let tree_print = self
+            //     .internal
+            //     .stores
+            //     .resolve_type(&self.internal.src_arena.original(&tree));
+            // dbg!(tidree_print);
+
+            // Check if 'tree' is the root (thus has no parents)
             if self.internal.src_arena.parent(&tree).is_none() {
                 self.internal.mappings.link(
                     self.internal.src_arena.root(), // <- this is tree
@@ -120,7 +127,9 @@ where
                     &self.internal.dst_arena.root(),
                 );
                 break;
-            } else if !(self.internal.mappings.is_src(&tree) || !self.src_has_children(tree)) {
+            } else if !(self.internal.mappings.is_src(&tree)
+                || !self.internal.src_has_children(tree))
+            {
                 let candidates = self.internal.get_dst_candidates(&tree);
                 let mut best = None;
                 let mut max: f64 = -1.;
@@ -130,12 +139,13 @@ where
 
                 for candidate in candidates {
                     // In gumtree implementation they check if Simliarity_THreshold is set, otherwise they compute a fitting value
-                    // !TODO -> should &[tree] be self.internal.src_arena.descendants(&tree)??
+                    // TODO: -> should &[tree] be self.internal.src_arena.descendants(&tree)??
                     let similarity = similarity_metrics::chawathe_similarity(
-                        &[tree],
-                        &[candidate],
+                        &self.internal.src_arena.descendants(&tree),
+                        &self.internal.dst_arena.descendants(&candidate),
                         &self.internal.mappings,
                     );
+                    dbg!(similarity);
 
                     if (similarity > max && similarity >= similarity_threshold) {
                         max = similarity;
@@ -152,77 +162,16 @@ where
                 && self
                     .internal
                     .are_dsts_unmapped(&self.internal.mappings.get_dst_unchecked(&tree))
+            //FIXME: sometimes throws errors with the dst unchecked
             {
                 self.last_chance_match(&tree, &self.internal.mappings.get_dst_unchecked(&tree));
             }
         }
     }
 
-    fn src_has_children(&mut self, src: M::Src) -> bool {
-        use num_traits::ToPrimitive;
-        let r = self
-            .internal
-            .stores
-            .node_store()
-            .resolve(&self.internal.src_arena.original(&src))
-            .has_children();
-
-        assert_eq!(
-            r,
-            self.internal.src_arena.lld(&src) < src,
-            "{:?} {:?}",
-            self.internal.src_arena.lld(&src),
-            src.to_usize()
-        );
-        r
-    }
-
     fn last_chance_match(&mut self, src: &M::Src, dst: &M::Dst) {
         self.internal.lcs_equal_matching(src, dst);
         self.internal.lcs_structure_matching(src, dst);
-        self.histogram_matching(src, dst);
-    }
-
-    // Almost exactly the same as the histogram matching from self.internal, but here the early escapes with checking if unmapped are added
-    fn histogram_matching(&mut self, src: &M::Src, dst: &M::Dst) {
-        let mut src_histogram: HashMap<<HAST::TS as TypeStore>::Ty, Vec<M::Src>> = HashMap::new(); //Map<Type, List<ITree>>
-        for c in self.internal.src_arena.children(src) {
-            if self.internal.are_srcs_unmapped(&c) {
-                let t = &self
-                    .internal
-                    .stores
-                    .resolve_type(&self.internal.src_arena.original(&c));
-                if !src_histogram.contains_key(t) {
-                    src_histogram.insert(*t, vec![]);
-                }
-                src_histogram.get_mut(t).unwrap().push(c);
-            }
-        }
-
-        let mut dst_histogram: HashMap<<HAST::TS as TypeStore>::Ty, Vec<M::Dst>> = HashMap::new(); //Map<Type, List<ITree>>
-        for c in self.internal.dst_arena.children(dst) {
-            if self.internal.are_dsts_unmapped(&c) {
-                let t = &self
-                    .internal
-                    .stores
-                    .resolve_type(&self.internal.dst_arena.original(&c));
-                if !dst_histogram.contains_key(t) {
-                    dst_histogram.insert(*t, vec![]);
-                }
-                dst_histogram.get_mut(t).unwrap().push(c);
-            }
-        }
-        for t in src_histogram.keys() {
-            if dst_histogram.contains_key(t)
-                && src_histogram[t].len() == 1
-                && dst_histogram[t].len() == 1
-            {
-                let t1 = src_histogram[t][0];
-                let t2 = dst_histogram[t][0];
-                if self.internal.mappings.link_if_both_unmapped(t1, t2) {
-                    self.internal.last_chance_match_histogram(&t1, &t2);
-                }
-            }
-        }
+        self.internal.histogram_matching(src, dst);
     }
 }

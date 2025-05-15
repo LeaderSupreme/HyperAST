@@ -102,6 +102,8 @@ where
     let subtree_mappings_s = mapper.mappings().len();
     dbg!(&subtree_matcher_t, &subtree_mappings_s);
     let now = Instant::now();
+    println!("mappings after top down mathcing: {:?}", mapper.mappings());
+
     let mapper = SimpleBottomUpMatcher::<_, _, _, _>::match_it(mapper);
     dbg!(&now.elapsed().as_secs_f64());
     let bottomup_matcher_t = now.elapsed().as_secs_f64();

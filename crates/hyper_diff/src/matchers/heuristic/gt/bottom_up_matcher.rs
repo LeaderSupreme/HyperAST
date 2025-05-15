@@ -186,7 +186,14 @@ where
                 }
             }
         }
-        todo!()
+    }
+
+    pub(super) fn src_has_children(&mut self, src: M::Src) -> bool {
+        use hyperast::types::Tree;
+        self.stores
+            .node_store()
+            .resolve(&self.src_arena.original(&src))
+            .has_children()
     }
 }
 
