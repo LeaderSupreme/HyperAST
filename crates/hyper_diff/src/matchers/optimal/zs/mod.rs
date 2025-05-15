@@ -86,7 +86,6 @@ pub struct MatcherImpl<'b, 'c, SD, DD, HAST, M> {
     pub(super) phantom: std::marker::PhantomData<*const (M, &'b ())>,
 }
 
-pub mod qgrams;
 
 #[doc(hidden)]
 pub mod qgrams;
