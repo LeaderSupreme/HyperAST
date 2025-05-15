@@ -34,7 +34,6 @@ impl<A> Default for ActionsVec<A> {
     }
 }
 
-
 pub fn actions_vec_f<P: TreePath<Item = HAST::Idx>, HAST: Copy>(
     f: &mut std::fmt::Formatter<'_>,
     v: &ActionsVec<SimpleAction<HAST::Label, P, HAST::IdN>>,
@@ -113,7 +112,7 @@ where
         "{:?} at {:?}",
         p,
         it.it
-            // .chain(vec![end.unwrap()].into_iter())
+            .chain(vec![end.unwrap()].into_iter())
             .collect::<Vec<_>>()
     )
 }
@@ -126,8 +125,9 @@ fn print_action<P: TreePath<Item = HAST::Idx>, HAST: Copy>(
 ) -> std::fmt::Result
 where
     HAST: HyperAST,
+    for<'t> <HAST as hyperast::types::AstLending<'t>>::RT: hyperast::types::WithSerialization,
     for<'t> <HAST as hyperast::types::AstLending<'t>>::RT: hyperast::types::WithStats,
-    HAST::IdN: Copy + NodeId<IdN = HAST::IdN> + Debug
+    HAST::IdN: Copy + NodeId<IdN = HAST::IdN> + Debug,
 {
     match &a.action {
         Act::Delete {} => {

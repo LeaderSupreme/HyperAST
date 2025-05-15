@@ -98,7 +98,6 @@ pub type MDCache = HashMap<NodeIdentifier, MD>;
 // eg. decls refs, maybe hashes but not size and height
 // * metadata: computation results from concrete code of node and its children
 // they can be qualitative metadata .eg a hash or they can be quantitative .eg lines of code
-#[derive(Debug)]
 pub struct MD {
     metrics: SubTreeMetrics<SyntaxNodeHashs<u32>>,
     ana: Option<PartialAnalysis>,
