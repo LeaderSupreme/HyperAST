@@ -153,7 +153,7 @@ where
                 // TODO remove and flip const param of iter_df_post
                 break;
             }
-            if !(self.internal.mappings.is_src(&a) || !self.src_has_children(a)) {
+            if !(self.internal.mappings.is_src(&a) || !self.internal.src_has_children(a)) {
                 let candidates = self.internal.get_dst_candidates(&a);
                 let mut best = None;
                 let mut max: f64 = -1.;
@@ -185,24 +185,6 @@ where
             self.internal.src_arena.root(),
             self.internal.dst_arena.root(),
         );
-    }
-
-    fn src_has_children(&mut self, src: M::Src) -> bool {
-        use num_traits::ToPrimitive;
-        let r = self
-            .internal
-            .stores
-            .node_store()
-            .resolve(&self.internal.src_arena.original(&src))
-            .has_children();
-        assert_eq!(
-            r,
-            self.internal.src_arena.lld(&src) < src,
-            "{:?} {:?}",
-            self.internal.src_arena.lld(&src),
-            src.to_usize()
-        );
-        r
     }
 
     pub(crate) fn last_chance_match_zs(&mut self, src: M::Src, dst: M::Dst) {
