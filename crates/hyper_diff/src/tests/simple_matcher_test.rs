@@ -92,6 +92,7 @@ fn get_diff_info(example: (SimpleTree<u8>, SimpleTree<u8>)) -> DiffInfo {
     // Get the number of generated actions
     let num_actions_normal = _diff_result_normal
         .actions
+        .as_ref()
         .expect("ASTs were not equal, but no actions were found")
         .len();
     let num_actions_lazy = _diff_result_lazy
@@ -100,6 +101,7 @@ fn get_diff_info(example: (SimpleTree<u8>, SimpleTree<u8>)) -> DiffInfo {
         .len();
     let num_actions_greedy = _diff_result_greedy
         .actions
+        .as_ref()
         .expect("ASTs were not equal, but no actions were found")
         .len();
 
@@ -134,6 +136,22 @@ fn get_diff_info(example: (SimpleTree<u8>, SimpleTree<u8>)) -> DiffInfo {
         "Greedy found {} actions, simple found {} actions and lazy simple found: {} actions",
         num_actions_greedy, num_actions_normal, num_actions_lazy
     );
+
+    println!("matches simple: {:?}", _diff_result_normal.mapper.mappings);
+    println!("matches lazy: {:?}", _diff_result_lazy.mapper.mappings);
+    println!("matches greedy: {:?}", _diff_result_greedy.mapper.mappings);
+    _diff_result_normal
+        .actions
+        .expect("no actions")
+        .iter()
+        .for_each(|action| println!("{:?}", action));
+
+    println!();
+    _diff_result_greedy
+        .actions
+        .expect("no actions")
+        .iter()
+        .for_each(|action| println!("{:?}", action));
 
     return DiffInfo {
         num_actions_normal,

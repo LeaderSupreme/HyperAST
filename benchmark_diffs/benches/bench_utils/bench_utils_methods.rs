@@ -1,5 +1,4 @@
 use criterion::{BenchmarkId, Criterion, black_box};
-use criterion_perf_events::Perf;
 use hyper_diff::{
     algorithms,
     decompressed_tree_store::{CompletePostOrder, lazy_post_order::LazyPostOrder},
@@ -23,7 +22,7 @@ use hyperast_benchmark_diffs::preprocess::{JavaPreprocessFileSys, parse_dir_pair
 use hyperast_gen_ts_java::legion_with_refs::Local;
 use std::{fmt::Debug, path::PathBuf};
 
-use crate::bench_utils::bench_utils_models::{BenchInfo, DataSet, Heuristic, HeuristicType};
+use crate::bench_utils::bench_utils_models::{DataSet, Heuristic, HeuristicType};
 
 #[allow(type_alias_bounds)]
 type CDS<HAST: HyperASTShared> = Decompressible<HAST, CompletePostOrder<HAST::IdN, u32>>;
@@ -80,11 +79,7 @@ where
     algorithms::gumtree_lazy::lazy_top_down(mapper_owned)
 }
 
-pub fn run_all_heuristics_for_dataset(
-    c: &mut Criterion<Perf>,
-    dataset: DataSet,
-    variants: &[Heuristic],
-) {
+pub fn run_all_heuristics_for_dataset(c: &mut Criterion, dataset: DataSet, variants: &[Heuristic]) {
     let mut group = c.benchmark_group(dataset.generate_bench_group_name());
 
     // Get the stores
@@ -132,9 +127,26 @@ pub fn run_all_heuristics_for_dataset(
                             };
 
                             let output = match heuristic {
-                                Heuristic::LazyGreedy => {
-                                    LazyGreedyBottomUpMatcher::<_, _, _, _>::match_it(ready_mapper)
-                                }
+                                Heuristic::LazyGreedy200 => LazyGreedyBottomUpMatcher::<
+                                    _,
+                                    _,
+                                    _,
+                                    _,
+                                    VecStore<_>,
+                                    200,
+                                >::match_it(
+                                    ready_mapper
+                                ),
+                                Heuristic::LazyGreedy1000 => LazyGreedyBottomUpMatcher::<
+                                    _,
+                                    _,
+                                    _,
+                                    _,
+                                    VecStore<_>,
+                                    1000,
+                                >::match_it(
+                                    ready_mapper
+                                ),
                                 Heuristic::LazySimple => {
                                     LazySimpleBottomUpMatcher::<_, _, _, _>::match_it(ready_mapper)
                                 }
@@ -154,8 +166,8 @@ pub fn run_all_heuristics_for_dataset(
                         || greedy_mapper.clone(),
                         |mapper| {
                             let output = match heuristic {
-                                Heuristic::Greedy => {
-                                    GreedyBottomUpMatcher::<_, _, _, _>::match_it(mapper)
+                                Heuristic::Greedy200 => {
+                                    GreedyBottomUpMatcher::<_, _, _, _, 200>::match_it(mapper)
                                 }
                                 Heuristic::Simple => {
                                     SimpleBottomUpMatcher::<_, _, _, _>::match_it(mapper)
@@ -172,10 +184,6 @@ pub fn run_all_heuristics_for_dataset(
             }
         }
     }
-
-    let bench_info =
-        BenchInfo::compute_new(dataset.clone(), &src, &dst, greedy_mapper, mapper_owned);
-    bench_info.write_to_file(dataset);
 
     group.finish();
 }

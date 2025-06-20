@@ -1,30 +1,19 @@
 pub(crate) mod bench_utils;
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use criterion_perf_events::Perf;
-use perfcnt::linux::HardwareEventType as Hardware;
-use perfcnt::linux::PerfCounterBuilderLinux as Builder;
 
-use crate::bench_utils::bench_utils_methods;
-use crate::bench_utils::bench_utils_models::{DataSet, Heuristic};
+use crate::bench_utils::{
+    bench_utils_methods,
+    bench_utils_models::{DataSet, Heuristic},
+};
 
-fn all_heuristics_bugsinpy_httpie(c: &mut Criterion<Perf>) {
+fn run_all_heuristics_ghjava(c: &mut Criterion) {
     let variants = [
         Heuristic::LazySimple,
+        Heuristic::LazyGreedy200,
+        Heuristic::LazyGreedy1000,
         Heuristic::Simple,
-        // Heuristic::LazyGreedy,
-        // Heuristic::Greedy,
-    ];
-    let dataset = DataSet::Defects4J(Some(String::from("Jsoup")));
-    bench_utils_methods::run_all_heuristics_for_dataset(c, dataset, &variants);
-}
-
-fn run_all_heuristics_ghjava(c: &mut Criterion<Perf>) {
-    let variants = [
-        Heuristic::LazySimple,
-        Heuristic::Simple,
-        // Heuristic::LazyGreedy,
-        // Heuristic::Greedy,
+        Heuristic::Greedy200,
     ];
 
     let dataset_projects: Vec<DataSet> = DataSet::GhJava(None)
@@ -38,12 +27,13 @@ fn run_all_heuristics_ghjava(c: &mut Criterion<Perf>) {
     }
 }
 
-fn run_all_heuristics_defects4j(c: &mut Criterion<Perf>) {
+fn run_all_heuristics_defects4j(c: &mut Criterion) {
     let variants = [
         Heuristic::LazySimple,
+        Heuristic::LazyGreedy200,
+        Heuristic::LazyGreedy1000,
         Heuristic::Simple,
-        // Heuristic::LazyGreedy,
-        // Heuristic::Greedy,
+        Heuristic::Greedy200,
     ];
 
     let dataset_projects: Vec<DataSet> = DataSet::Defects4J(None)
@@ -60,28 +50,17 @@ fn run_all_heuristics_defects4j(c: &mut Criterion<Perf>) {
 // Make sure the event_paranoid is set for this session, 0 or 1 should suffice.
 // sudo sysctl -w kernel.perf_event_paranoid=0
 criterion_group!(
-    name = bugsinpy_httpie;
-    config = Criterion::default()
-        .with_measurement(Perf::new(Builder::from_hardware_event(Hardware::Instructions)))
-        .sample_size(10)
-        .configure_from_args();
-    targets = all_heuristics_bugsinpy_httpie
-);
-criterion_group!(
     name = defects4j_all;
     config = Criterion::default()
-        .with_measurement(Perf::new(Builder::from_hardware_event(Hardware::Instructions)))
-        .sample_size(15)
+        .sample_size(10)
         .configure_from_args();
     targets = run_all_heuristics_defects4j
 );
 criterion_group!(
     name = ghjava_all;
     config = Criterion::default()
-        .with_measurement(Perf::new(Builder::from_hardware_event(Hardware::Instructions)))
-        .sample_size(15)
+        .sample_size(10)
         .configure_from_args();
     targets = run_all_heuristics_ghjava
 );
 criterion_main!(defects4j_all, ghjava_all);
-// criterion_main!(bugsinpy_httpie);

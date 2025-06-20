@@ -1,34 +1,10 @@
-use hyper_diff::{
-    decompressed_tree_store::{CompletePostOrder, lazy_post_order::LazyPostOrder},
-    matchers::{
-        Decompressible, Mapper,
-        heuristic::gt::{
-            greedy_bottom_up_matcher::GreedyBottomUpMatcher,
-            lazy_simple_bottom_up_matcher::LazySimpleBottomUpMatcher,
-            lazy2_greedy_bottom_up_matcher::GreedyBottomUpMatcher as LazyGreedyBottomUpMatcher,
-            simple_bottom_up_matcher3::SimpleBottomUpMatcher,
-        },
-        mapping_store::{MappingStore, VecStore},
-    },
-};
-use hyperast::types::{self, HyperAST, HyperASTShared, NodeId};
-use hyperast_gen_ts_java::legion_with_refs::Local;
 use std::{
     fmt::{Debug, Display},
     fs,
-    fs::{File, create_dir_all},
-    io::Write,
     path::{Path, PathBuf},
 };
 
 use serde::Serialize;
-
-use crate::bench_utils::bench_utils_methods::lazy_top_down;
-
-#[allow(type_alias_bounds)]
-type CDS<HAST: HyperASTShared> = Decompressible<HAST, CompletePostOrder<HAST::IdN, u32>>;
-#[allow(type_alias_bounds)]
-type DS<HAST: HyperASTShared> = Decompressible<HAST, LazyPostOrder<HAST::IdN, u32>>;
 
 pub enum HeuristicType {
     Lazy,
@@ -37,18 +13,20 @@ pub enum HeuristicType {
 
 #[derive(Clone, Copy)]
 pub enum Heuristic {
-    Greedy,
+    Greedy200,
     Simple,
-    LazyGreedy,
     LazySimple,
+    LazyGreedy200,
+    LazyGreedy1000,
 }
 
 impl Display for Heuristic {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Heuristic::Greedy => write!(f, "Gumtree_Greedy_200"),
+            Heuristic::Greedy200 => write!(f, "Gumtree_Greedy_200"),
             Heuristic::Simple => write!(f, "Gumtree_Simple"),
-            Heuristic::LazyGreedy => write!(f, "Lazy_Gumtree_Greedy_200"),
+            Heuristic::LazyGreedy200 => write!(f, "Lazy_Gumtree_Greedy_200"),
+            Heuristic::LazyGreedy1000 => write!(f, "Lazy_Gumtree_Greedy_1000"),
             Heuristic::LazySimple => write!(f, "Lazy_Gumtree_Simple"),
         }
     }
@@ -57,9 +35,10 @@ impl Display for Heuristic {
 impl Heuristic {
     pub fn get_heuristic_type(&self) -> HeuristicType {
         match self {
-            Heuristic::Greedy => HeuristicType::Greedy,
+            Heuristic::Greedy200 => HeuristicType::Greedy,
             Heuristic::Simple => HeuristicType::Greedy,
-            Heuristic::LazyGreedy => HeuristicType::Lazy,
+            Heuristic::LazyGreedy200 => HeuristicType::Lazy,
+            Heuristic::LazyGreedy1000 => HeuristicType::Lazy,
             Heuristic::LazySimple => HeuristicType::Lazy,
         }
     }
@@ -169,90 +148,5 @@ impl DataSet {
         let (dataset_name, opt_project_name) = self.parts();
         let project_name = opt_project_name.as_deref().unwrap_or_default();
         format!("{}_{}", dataset_name, project_name)
-    }
-}
-
-#[derive(Serialize)]
-pub struct BenchInfo {
-    pub(crate) dataset: DataSet,
-    pub(crate) metrics_src: u32,
-    pub(crate) metrics_dst: u32,
-    pub(crate) num_matches_greedy_top_down: usize,
-    pub(crate) num_matches_lazy_top_down: usize,
-    pub(crate) num_matches_greedy_bottom_up: usize,
-    pub(crate) num_matches_simple_bottom_up: usize,
-    pub(crate) num_matches_lazy_greedy_bottom_up: usize,
-    pub(crate) num_matches_lazy_simple_bottom_up: usize,
-}
-
-impl BenchInfo {
-    pub fn compute_new<HAST: HyperAST + Copy>(
-        dataset: DataSet,
-        src: &Local,
-        dst: &Local,
-        greedy_mapper: Mapper<HAST, CDS<HAST>, CDS<HAST>, VecStore<u32>>,
-        lazy_mapper: (DS<HAST>, DS<HAST>),
-    ) -> Self
-    where
-        HAST::IdN: Clone + Debug + Eq,
-        HAST::IdN: NodeId<IdN = HAST::IdN>,
-        HAST::Idx: hyperast::PrimInt,
-        HAST::Label: Debug + Clone + Copy + Eq,
-        for<'t> <HAST as hyperast::types::AstLending<'t>>::RT: types::WithHashs + types::WithStats,
-    {
-        let num_matches_greedy_bottom_up =
-            GreedyBottomUpMatcher::<_, _, _, _>::match_it(greedy_mapper.clone())
-                .mappings
-                .len();
-        let num_matches_simple_bottom_up =
-            SimpleBottomUpMatcher::<_, _, _, _>::match_it(greedy_mapper.clone())
-                .mappings
-                .len();
-        let num_matches_lazy_greedy_bottom_up = LazyGreedyBottomUpMatcher::<_, _, _, _>::match_it(
-            lazy_top_down(&mut lazy_mapper.clone()),
-        )
-        .mappings
-        .len();
-        let num_matches_lazy_simple_bottom_up = LazySimpleBottomUpMatcher::<_, _, _, _>::match_it(
-            lazy_top_down(&mut lazy_mapper.clone()),
-        )
-        .mappings
-        .len();
-
-        BenchInfo {
-            dataset,
-            metrics_src: src.metrics.size,
-            metrics_dst: dst.metrics.size,
-            num_matches_greedy_top_down: greedy_mapper.mappings.len(),
-            num_matches_lazy_top_down: lazy_top_down(&mut lazy_mapper.clone()).mappings.len(),
-            num_matches_greedy_bottom_up: num_matches_greedy_bottom_up,
-            num_matches_simple_bottom_up: num_matches_simple_bottom_up,
-            num_matches_lazy_greedy_bottom_up: num_matches_lazy_greedy_bottom_up,
-            num_matches_lazy_simple_bottom_up: num_matches_lazy_simple_bottom_up,
-        }
-    }
-
-    pub fn write_to_file(&self, dataset: DataSet) {
-        // Assemble path to file location, add timestamp for uniqueness
-        let timestamp = chrono::Local::now().format("%Y-%m-%dT%H-%M").to_string();
-        let file_path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("benches")
-            .join("bench_stats")
-            .join(format!("{}_{}.json", dataset, timestamp));
-
-        // Create the path to the file if it does not exist yet
-        if let Some(parent) = file_path.parent() {
-            create_dir_all(parent).expect("Failed to create parent dirs");
-        }
-
-        // Serialize the bench info
-        let json_string =
-            serde_json::to_string_pretty(self).expect("couldnt serialize BenchInfo to json string");
-
-        // Write to file
-        let mut file = File::create(&file_path).expect("Unable to create file");
-        file.write_all(json_string.as_bytes())
-            .expect("Failed to write JSON to file");
-        println!("Wrote meta data to: {:?}", file_path);
     }
 }
